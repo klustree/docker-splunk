@@ -6,6 +6,7 @@ ENV SPLUNK_BUILD c8a78efdd40f
 ENV SPLUNK_FILENAME splunk-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-x86_64.tgz
 
 ENV SPLUNK_HOME /opt/splunk
+ENV SPLUNK_APPS ${SPLUNK_HOME}/etc/apps
 ENV SPLUNK_GROUP splunk
 ENV SPLUNK_USER splunk
 ENV SPLUNK_BACKUP_DEFAULT_ETC /var/opt/splunk
@@ -56,4 +57,18 @@ WORKDIR /opt/splunk
 VOLUME [ "/opt/splunk/etc", "/opt/splunk/var" ]
 
 ENTRYPOINT ["/sbin/entrypoint.sh"]
+
+# Downalod and install jdk8
+RUN apt-get update && apt-get install -y wget sudo \
+    && mkdir -p /opt/jdk/ && cd /opt/jdk \
+    && wget -q --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u152-b16/aa0333dd3019491ca4f6ddbe78cdb6d0/jdk-8u152-linux-x64.tar.gz \
+    && tar -zxf jdk-8u152-linux-x64.tar.gz \
+    && apt-get purge -y --auto-remove wget \
+    && cd /opt/jdk/jdk1.8.0_152/ \
+    && rm -rf /var/lib/apt/linsts/*
+ENV JAVA_HOME /opt/jdk/jdk1.8.0_152/
+
+# Plugin install
+COPY splunk_app_db_connect/ ${SPLUNK_APPS}/splunk_app_db_connect/
+
 CMD ["start-service"]
